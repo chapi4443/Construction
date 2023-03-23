@@ -48,20 +48,40 @@ axiosInstance.interceptors.request.use((request: AxiosRequestConfig) => {
   return request;
 });
 
-function App() {
+function App (){
   const authProvider: AuthProvider = {
-    login: ({ credential }: CredentialResponse) => {
-      const profileObj = credential ? parseJwt(credential) : null;
+      login: async ({ credential }: CredentialResponse) => {
+          const profileObj = credential ? parseJwt(credential) : null;
 
-      if (profileObj) {
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            ...profileObj,
-            avatar: profileObj.picture,
-          })
-        );
-      }
+          if (profileObj) {
+              const response = await fetch(
+                  "http://localhost:8080/api/v1/users",
+                  {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                          name: profileObj.name,
+                          email: profileObj.email,
+                          avatar: profileObj.picture,
+                      }),
+                  },
+              );
+
+              const data = await response.json();
+
+              if (response.status === 200) {
+                  localStorage.setItem(
+                      "user",
+                      JSON.stringify({
+                          ...profileObj,
+                          avatar: profileObj.picture,
+                          userid: data._id,
+                      }),
+                  );
+              } else {
+                  return Promise.reject();
+              }
+          }
 
       localStorage.setItem("token", `${credential}`);
 
